@@ -6,15 +6,15 @@
   
   <title>设计模式-工厂模式 | Chubby&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="[toc] 设计模式-工厂模式Purpose最近公司需要将”issue字段以及状态变化和数据处理状态变化”在飞书上通知相关人员，其中飞书通知pattern很多地方是相似的，所以学习一下工厂模式，来让代码具有扩展性，方便在后续添加新通知需求的操作。 Factory method why 需要使用factory method ？   工厂模式是为了解耦：把对象的创建和使用的过程分开。解决接口选择的问题">
+  <meta name="description" content="设计模式-工厂模式Purpose最近公司需要将”issue字段以及状态变化和数据处理状态变化”在飞书上通知相关人员，其中飞书通知pattern很多地方是相似的，所以学习一下工厂模式，来让代码具有扩展性，方便在后续添加新通知需求的操作。 Factory method why 需要使用factory method ？   工厂模式是为了解耦：把对象的创建和使用的过程分开。解决接口选择的问题。   wh">
 <meta property="og:type" content="article">
 <meta property="og:title" content="设计模式-工厂模式">
 <meta property="og:url" content="http://panchujun4.cn/2022/10/27/year-month-day-design-pattern-factory-method-md/index.html">
 <meta property="og:site_name" content="Chubby&#39;s blog">
-<meta property="og:description" content="[toc] 设计模式-工厂模式Purpose最近公司需要将”issue字段以及状态变化和数据处理状态变化”在飞书上通知相关人员，其中飞书通知pattern很多地方是相似的，所以学习一下工厂模式，来让代码具有扩展性，方便在后续添加新通知需求的操作。 Factory method why 需要使用factory method ？   工厂模式是为了解耦：把对象的创建和使用的过程分开。解决接口选择的问题">
+<meta property="og:description" content="设计模式-工厂模式Purpose最近公司需要将”issue字段以及状态变化和数据处理状态变化”在飞书上通知相关人员，其中飞书通知pattern很多地方是相似的，所以学习一下工厂模式，来让代码具有扩展性，方便在后续添加新通知需求的操作。 Factory method why 需要使用factory method ？   工厂模式是为了解耦：把对象的创建和使用的过程分开。解决接口选择的问题。   wh">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-10-27T05:20:16.000Z">
-<meta property="article:modified_time" content="2022-10-27T05:21:36.000Z">
+<meta property="article:modified_time" content="2022-10-27T05:33:12.000Z">
 <meta property="article:author" content="Chubby Pan">
 <meta name="twitter:card" content="summary">
   
@@ -95,8 +95,7 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <p>[toc]</p>
-<h1 id="设计模式-工厂模式"><a href="#设计模式-工厂模式" class="headerlink" title="设计模式-工厂模式"></a>设计模式-工厂模式</h1><h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p>最近公司需要将”issue字段以及状态变化和数据处理状态变化”在飞书上通知相关人员，其中飞书通知pattern很多地方是相似的，所以学习一下工厂模式，来让代码具有扩展性，方便在后续添加新通知需求的操作。</p>
+        <h1 id="设计模式-工厂模式"><a href="#设计模式-工厂模式" class="headerlink" title="设计模式-工厂模式"></a>设计模式-工厂模式</h1><h2 id="Purpose"><a href="#Purpose" class="headerlink" title="Purpose"></a>Purpose</h2><p>最近公司需要将”issue字段以及状态变化和数据处理状态变化”在飞书上通知相关人员，其中飞书通知pattern很多地方是相似的，所以学习一下工厂模式，来让代码具有扩展性，方便在后续添加新通知需求的操作。</p>
 <h2 id="Factory-method"><a href="#Factory-method" class="headerlink" title="Factory method"></a>Factory method</h2><ul>
 <li><p><strong>why 需要使用factory method ？</strong> </p>
 <ul>
