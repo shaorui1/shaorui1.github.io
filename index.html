@@ -124,8 +124,8 @@
 </li>
 </ol>
 <h3 id="方案对比"><a href="#方案对比" class="headerlink" title="方案对比"></a>方案对比</h3><ol>
-<li>比较三种方案之间的差别<br>由于方法2和方法1总体差不多，只是一个在表内添加字段，一个是新表； 联表操作一定会带来性能的下降，所以只比较方案1，方案3；<br><img src="/sql-bitmap/method_compare.png" alt="方案对比图"><br>（数据量大概在300w条）</li>
-<li>比较之前方案和现有方案之间的差别<br>   <img src="/sql-bitmap/time_comsuming_compare1.png" alt="原有方案耗时"><br>   经过多次测试，耗时在20-60s波动，会根据数据量的返回数量波动；<br>   <img src="/sql-bitmap/time_comsuming_compare2.png" alt="原有方案耗时"></li>
+<li>比较三种方案之间的差别<br>由于方法2和方法1总体差不多，只是一个在表内添加字段，一个是新表； 联表操作一定会带来性能的下降，所以只比较方案1，方案3；<br><img src="/2022/10/31/method_compare.png" alt="方案对比图"><br>（数据量大概在300w条）</li>
+<li>比较之前方案和现有方案之间的差别<br>   <img src="/2022/10/31/time_comsuming_compare1.png" alt="原有方案耗时"><br>   经过多次测试，耗时在20-60s波动，会根据数据量的返回数量波动；<br>   <img src="/2022/10/31/time_comsuming_compare2.png" alt="原有方案耗时"></li>
 </ol>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><ol>
 <li>只要有联表操作，和json解析就会带来性能雪崩；</li>

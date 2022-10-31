@@ -13,14 +13,14 @@
 <meta property="og:site_name" content="Chubby&#39;s blog">
 <meta property="og:description" content="问题背景描述在查询issue列表时，有一些查询参数(eg.processed_module_groups, raw_module_groups)时，想要获得符合这些查询参数的issue列表时，查询时间会高达40s-60s； 产生问题的原因:这里涉及到两个存储在mysql中的表格；一个是issue表，一个是issue_data表格；issue表中存有常见的字段，通常会和其他表联表查询；issue_d">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://panchujun4.cn/sql-bitmap/method_compare.png">
-<meta property="og:image" content="http://panchujun4.cn/sql-bitmap/time_comsuming_compare1.png">
-<meta property="og:image" content="http://panchujun4.cn/sql-bitmap/time_comsuming_compare2.png">
+<meta property="og:image" content="http://panchujun4.cn/2022/10/31/method_compare.png">
+<meta property="og:image" content="http://panchujun4.cn/2022/10/31/time_comsuming_compare1.png">
+<meta property="og:image" content="http://panchujun4.cn/2022/10/31/time_comsuming_compare2.png">
 <meta property="article:published_time" content="2022-10-31T03:39:00.000Z">
-<meta property="article:modified_time" content="2022-10-31T06:25:27.000Z">
+<meta property="article:modified_time" content="2022-10-31T06:53:20.000Z">
 <meta property="article:author" content="Chubby Pan">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://panchujun4.cn/sql-bitmap/method_compare.png">
+<meta name="twitter:image" content="http://panchujun4.cn/2022/10/31/method_compare.png">
   
     <link rel="alternate" href="/atom.xml" title="Chubby's blog" type="application/atom+xml">
   
@@ -130,8 +130,8 @@
 </li>
 </ol>
 <h3 id="方案对比"><a href="#方案对比" class="headerlink" title="方案对比"></a>方案对比</h3><ol>
-<li>比较三种方案之间的差别<br>由于方法2和方法1总体差不多，只是一个在表内添加字段，一个是新表； 联表操作一定会带来性能的下降，所以只比较方案1，方案3；<br><img src="/sql-bitmap/method_compare.png" alt="方案对比图"><br>（数据量大概在300w条）</li>
-<li>比较之前方案和现有方案之间的差别<br>   <img src="/sql-bitmap/time_comsuming_compare1.png" alt="原有方案耗时"><br>   经过多次测试，耗时在20-60s波动，会根据数据量的返回数量波动；<br>   <img src="/sql-bitmap/time_comsuming_compare2.png" alt="原有方案耗时"></li>
+<li>比较三种方案之间的差别<br>由于方法2和方法1总体差不多，只是一个在表内添加字段，一个是新表； 联表操作一定会带来性能的下降，所以只比较方案1，方案3；<br><img src="/2022/10/31/method_compare.png" alt="方案对比图"><br>（数据量大概在300w条）</li>
+<li>比较之前方案和现有方案之间的差别<br>   <img src="/2022/10/31/time_comsuming_compare1.png" alt="原有方案耗时"><br>   经过多次测试，耗时在20-60s波动，会根据数据量的返回数量波动；<br>   <img src="/2022/10/31/time_comsuming_compare2.png" alt="原有方案耗时"></li>
 </ol>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><ol>
 <li>只要有联表操作，和json解析就会带来性能雪崩；</li>
