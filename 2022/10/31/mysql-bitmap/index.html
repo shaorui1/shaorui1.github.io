@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>优化数据查询以及存储 | Chubby&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="问题背景描述在查询issue列表时，有一些查询参数(eg.processed_module_groups, raw_module_groups)时，想要获得符合这些查询参数的issue列表时，查询时间会高达40s-60s； 产生问题的原因:这里涉及到两个存储在mysql中的表格；一个是issue表，一个是issue_data表格；issue表中存有常见的字段，通常会和其他表联表查询；issue_d">
+<meta property="og:type" content="article">
+<meta property="og:title" content="优化数据查询以及存储">
+<meta property="og:url" content="http://panchujun4.cn/2022/10/31/mysql-bitmap/index.html">
+<meta property="og:site_name" content="Chubby&#39;s blog">
+<meta property="og:description" content="问题背景描述在查询issue列表时，有一些查询参数(eg.processed_module_groups, raw_module_groups)时，想要获得符合这些查询参数的issue列表时，查询时间会高达40s-60s； 产生问题的原因:这里涉及到两个存储在mysql中的表格；一个是issue表，一个是issue_data表格；issue表中存有常见的字段，通常会和其他表联表查询；issue_d">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://panchujun4.cn/Pics/%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94%E5%9B%BE.png">
+<meta property="og:image" content="http://panchujun4.cn/Pics/time_comsuming_compare1.png">
+<meta property="og:image" content="http://panchujun4.cn/Pics/time_comsuming_compare2.png">
+<meta property="article:published_time" content="2022-10-31T03:39:00.000Z">
+<meta property="article:modified_time" content="2022-10-31T03:55:31.000Z">
+<meta property="article:author" content="Chubby Pan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://panchujun4.cn/Pics/%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94%E5%9B%BE.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Chubby's blog" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Chubby&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://panchujun4.cn"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-mysql-bitmap" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2022/10/31/mysql-bitmap/" class="article-date">
+  <time class="dt-published" datetime="2022-10-31T03:39:00.000Z" itemprop="datePublished">2022-10-31</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      优化数据查询以及存储
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h2 id="问题背景"><a href="#问题背景" class="headerlink" title="问题背景"></a>问题背景</h2><h3 id="描述"><a href="#描述" class="headerlink" title="描述"></a>描述</h3><p>在查询issue列表时，有一些查询参数(eg.processed_module_groups, raw_module_groups)时，想要获得符合这些查询参数的issue列表时，查询时间会高达40s-60s；</p>
+<h3 id="产生问题的原因"><a href="#产生问题的原因" class="headerlink" title="产生问题的原因:"></a>产生问题的原因:</h3><p>这里涉及到两个存储在mysql中的表格；<br>一个是issue表，一个是issue_data表格；<br>issue表中存有常见的字段，通常会和其他表联表查询；issue_data表存所有issue经过处理和未经过处理的数据相关信息，包括数据状态（raw_data_status &#x2F; prod_data_status），数据的存储路径等等。每条数据的raw data和prod data都是由多个文件组成的，采用json格式存储在issue_data中；格式如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;FL-clip&quot;:&#123;</span><br><span class="line">    &quot;name&quot;: &quot;FL-clip&quot;, </span><br><span class="line">    &quot;state&quot;: 2, </span><br><span class="line">    &quot;unavailable&quot;: [&quot;SideView_FL&quot;]</span><br><span class="line">    &#125;, </span><br><span class="line"> &quot;FN-clip&quot;:&#123;</span><br><span class="line">    &quot;name&quot;: &quot;FN-clip&quot;, </span><br><span class="line">    &quot;state&quot;: 2, </span><br><span class="line">    &quot;unavailable&quot;: [&quot;Front30&quot;]</span><br><span class="line">    &#125;, </span><br><span class="line">&quot;RL-clip&quot;: &#123;</span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<p>其中raw&#x2F;processed module数据量非常庞大，需要查询每一个issue的process_data_status,而process_data_status是一个json格式的多struct组合，每一个成员都有用status和是否可获取的状态，只有对应的数据status都为1，才能返回；<br>举例，某个名为感知2p1的prod_module，需要    </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ProdModules2p1 = [</span><br><span class="line">    &quot;FW-frames&quot;,</span><br><span class="line">    &quot;FN-frames&quot;,</span><br><span class="line">    &quot;parameters-FW&quot;,</span><br><span class="line">    &quot;parameters-FN&quot;,</span><br><span class="line">    &quot;lidar_point_cloud&quot;,</span><br><span class="line">    &quot;localization&quot;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>当所有的status 都为1时，才可以将这条issue返回；</p>
+<p>这里涉及到一个全表解析json格式数据查询的操作，以及需要和issue表联表并和其他字段联合查询的操作，这两个操作都会带来性能的雪崩。</p>
+<h2 id="解决措施"><a href="#解决措施" class="headerlink" title="解决措施"></a>解决措施</h2><ol>
+<li><p><strong>方法1</strong></p>
+<p> 增加一些字段在issue表格当中，分别表示raw data status 2p1, raw data status 4p1</p>
+<ul>
+<li>pros：编码简单</li>
+<li>cons：需要添加大量的字段，和issue_data表的数据重复，属于冗余信息</li>
+</ul>
+</li>
+<li><p><strong>方法2</strong></p>
+<p> 额外创建一个table，存放raw data status 2p1, raw data status 4p1等的可视化与否的结果</p>
+<ul>
+<li>pros：编码相对简单</li>
+<li>cons：和issue表的其他字段进行查询时，会有联表操作，也会影响性能</li>
+</ul>
+</li>
+<li><p><strong>方法3</strong></p>
+<p> 在issue 表中新添字段，使用bitmap来表示各个更新链路的status，当需要查询某些数据可视化模块时，使用与 位运算和其他需要联合索引的字段进行全表查询； </p>
+<ul>
+<li>pros：仅增加一个字段，且在和issue表其他字段联合查询时，不需要进行join联表操作；</li>
+<li>cons：编码复杂，如果后续需要增加可视化类别时，需要重新定义bitmap的各bit含义，扩展性比较差；</li>
+</ul>
+</li>
+</ol>
+<h3 id="方案对比"><a href="#方案对比" class="headerlink" title="方案对比"></a>方案对比</h3><ol>
+<li>比较三种方案之间的差别<br>由于方法2和方法1总体差不多，只是一个在表内添加字段，一个是新表； 联表操作一定会带来性能的下降，所以只比较方案1，方案3；<br><img src="/Pics/%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94%E5%9B%BE.png" alt="方案对比图"><br>（数据量大概在300w条）</li>
+<li>比较之前方案和现有方案之间的差别<br>   <img src="/Pics/time_comsuming_compare1.png" alt="原有方案耗时"><br>   经过多次测试，耗时在20-60s波动，会根据数据量的返回数量波动；<br>   <img src="/Pics/time_comsuming_compare2.png" alt="原有方案耗时2"></li>
+</ol>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><ol>
+<li>只要有联表操作，和json解析就会带来性能雪崩；</li>
+<li>使用bitmap的效果和同时设置多个字段的效果差不多，比联表操作快70%左右；</li>
+</ol>
+<p>   json解析的性能分析，参考 <a target="_blank" rel="noopener" href="https://dba.stackexchange.com/questions/203037/is-the-mysql-json-data-type-bad-for-performance-for-data-retrieval">这个链接</a></p>
+<h2 id="具体解决措施"><a href="#具体解决措施" class="headerlink" title="具体解决措施"></a>具体解决措施</h2><pre><code>获取现有issue_data中的数据可视化结果，并存入bitmap字段放入issue表中。
+</code></pre>
+<h4 id="bit位定义"><a href="#bit位定义" class="headerlink" title="bit位定义"></a>bit位定义</h4><pre><code> 这里和初始方案也不太一样，本来打算针对各个模块来写bitmap；
+ 比如说使用bit 0表示module A，该需要四个文件，这四个文件的status 都为1（可用），定义bit 0 为1；
+ 但是考虑到这里的模块后面可能会扩增，目前有12个模块，不知道业务方会不会扩展模块，如果扩展模块，还需要重新刷库写bitmap； 所以bitmap根据文件来定义bit位。比如module A 需要4个文件， 文件1，2，3存在，文件4不存在，可以使用bitmap = 7 表示module A 可用；module B需要7个文件，文件123456存在，7不存在，可以使用bitmap = 63 来表示module B 可用；即使module A， module B 甚至以后需要扩展的module有相同的文件，也可以不用重复刷新原有数据，只需要在更新数据时刷入即可；
+</code></pre>
+<h4 id="增加刷新逻辑"><a href="#增加刷新逻辑" class="headerlink" title="增加刷新逻辑"></a>增加刷新逻辑</h4><pre><code>每次某个issue的module有文件发生更新时，都同步更新这个bitmap；
+如果原先status = 1，要更新的status = 1，不用更新；
+如果原先status != 1， 要更新的status = 1， bitmap += 1 &lt;&lt; fileMap[filename]
+如果原先status = 1，要更新的status != 1 ，bitmap -= 1 &lt;&lt; fileMap[filename]
+</code></pre>
+<h4 id="批量更新原始表格字段"><a href="#批量更新原始表格字段" class="headerlink" title="批量更新原始表格字段"></a>批量更新原始表格字段</h4><pre><code>几百万数据批量更新，还想要短期内完成，这里又有很多想说的，下次总结吧
+</code></pre>
+<h4 id="先上线上述部分内容，增量修改，最后将查询逻辑上线。"><a href="#先上线上述部分内容，增量修改，最后将查询逻辑上线。" class="headerlink" title="先上线上述部分内容，增量修改，最后将查询逻辑上线。"></a>先上线上述部分内容，增量修改，最后将查询逻辑上线。</h4><p>   查询时，可以和其他字段联合查询；<br>   为了避免出现 查询module A状态可用的issues 时，过滤了<strong>符合moduleA，B…<strong>而仅保留</strong>只符合moduleA</strong>的issue，所以在查询时需要同moduleA的bitmap做一个与操作；<br>   <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// example</span><br><span class="line">// 仅返回符合bitmap = 15 （module A 可用）的数据</span><br><span class="line">SELECT * FROM issue where bitmap = 15；</span><br><span class="line"></span><br><span class="line">// 返回符合符合bitmap = 15 （module A 可用）的数据</span><br><span class="line">SELECT * FROM issue where (bitmap &amp; 15) = 15;</span><br></pre></td></tr></table></figure><br>   以上的区别是，后者也会返回不仅moduleA可用，其他module也可用的issue（只不过我们不care这个module是不是可用）； 而前者只能返回仅moduleA可用的issue，有一些moduleA，moduleB，C都可用的issue会被过滤掉，因为查询过于精确；</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a target="_blank" rel="noopener" href="https://dba.stackexchange.com/questions/203037/is-the-mysql-json-data-type-bad-for-performance-for-data-retrieval">Is the MySQL JSON data type bad for performance for data retrieval</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://panchujun4.cn/2022/10/31/mysql-bitmap/" data-id="cl9w90mv80000e4sacfpo41vn" data-title="优化数据查询以及存储" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2022/10/27/design-pattern-factory/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">（设计模式）工厂模式应用于飞书通知系统</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/10/">October 2022</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">August 2022</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2022/10/31/mysql-bitmap/">优化数据查询以及存储</a>
+          </li>
+        
+          <li>
+            <a href="/2022/10/27/design-pattern-factory/">（设计模式）工厂模式应用于飞书通知系统</a>
+          </li>
+        
+          <li>
+            <a href="/2022/08/31/first-day/">first day</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2022 Chubby Pan<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
