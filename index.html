@@ -71,9 +71,9 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-mysql-bitmap" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+    <article id="post-sql-bitmap" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2022/10/31/mysql-bitmap/" class="article-date">
+    <a href="/2022/10/31/sql-bitmap/" class="article-date">
   <time class="dt-published" datetime="2022-10-31T03:39:00.000Z" itemprop="datePublished">2022-10-31</time>
 </a>
     
@@ -85,7 +85,7 @@
         
   
     <h1 itemprop="name">
-      <a class="p-name article-title" href="/2022/10/31/mysql-bitmap/">优化数据查询以及存储</a>
+      <a class="p-name article-title" href="/2022/10/31/sql-bitmap/">优化数据查询以及存储</a>
     </h1>
   
 
@@ -124,8 +124,8 @@
 </li>
 </ol>
 <h3 id="方案对比"><a href="#方案对比" class="headerlink" title="方案对比"></a>方案对比</h3><ol>
-<li>比较三种方案之间的差别<br>由于方法2和方法1总体差不多，只是一个在表内添加字段，一个是新表； 联表操作一定会带来性能的下降，所以只比较方案1，方案3；<br><img src="/Pics/%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94%E5%9B%BE.png" alt="方案对比图"><br>（数据量大概在300w条）</li>
-<li>比较之前方案和现有方案之间的差别<br>   <img src="/Pics/time_comsuming_compare1.png" alt="原有方案耗时"><br>   经过多次测试，耗时在20-60s波动，会根据数据量的返回数量波动；<br>   <img src="/Pics/time_comsuming_compare2.png" alt="原有方案耗时2"></li>
+<li>比较三种方案之间的差别<br>由于方法2和方法1总体差不多，只是一个在表内添加字段，一个是新表； 联表操作一定会带来性能的下降，所以只比较方案1，方案3；<br><img src="/sql-bitmap/method_compare.png" alt="方案对比图"><br>（数据量大概在300w条）</li>
+<li>比较之前方案和现有方案之间的差别<br>   <img src="/sql-bitmap/time_comsuming_compare1.png" alt="原有方案耗时"><br>   经过多次测试，耗时在20-60s波动，会根据数据量的返回数量波动；<br>   <img src="/sql-bitmap/time_comsuming_compare2.png" alt="原有方案耗时"></li>
 </ol>
 <h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><ol>
 <li>只要有联表操作，和json解析就会带来性能雪崩；</li>
@@ -151,7 +151,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://panchujun4.cn/2022/10/31/mysql-bitmap/" data-id="cl9w90mv80000e4sacfpo41vn" data-title="优化数据查询以及存储" class="article-share-link">Share</a>
+      <a data-url="http://panchujun4.cn/2022/10/31/sql-bitmap/" data-id="cl9wedejl000072sah5bffqdh" data-title="优化数据查询以及存储" class="article-share-link">Share</a>
       
       
       
@@ -323,7 +323,7 @@
       <ul>
         
           <li>
-            <a href="/2022/10/31/mysql-bitmap/">优化数据查询以及存储</a>
+            <a href="/2022/10/31/sql-bitmap/">优化数据查询以及存储</a>
           </li>
         
           <li>
